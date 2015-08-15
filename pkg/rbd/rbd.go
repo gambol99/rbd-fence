@@ -25,18 +25,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gambol99/rbd-manager/pkg/utils"
+	"github.com/gambol99/rbd-fence/pkg/utils"
 
 	"github.com/golang/glog"
 )
 
-type rbdUtil struct {}
+type rbdUtil struct{}
 
 var (
-	lock_regex  = regexp.MustCompile("^(client\\.[0-9]+)\\s+([[:alnum:]\\._-]*)\\s+([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}):[0-9]+/([0-9]+)\\s+$")
-	default_timeout = time.Duration(10) * time.Second
+	lockRegex      = regexp.MustCompile("^(client\\.[0-9]+)\\s+([[:alnum:]\\._-]*)\\s+([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}):[0-9]+/([0-9]+)\\s+$")
+	defaultTimeout = time.Duration(10) * time.Second
 )
 
+// NewRBDInterface ... create a new service interface for rbd operations
 func NewRBDInterface() (RBDInterface, error) {
 	return &rbdUtil{}, nil
 }
@@ -44,7 +45,7 @@ func NewRBDInterface() (RBDInterface, error) {
 // Get a list of the pool
 func (r rbdUtil) GetPools() ([]CephPool, error) {
 	// step: get the pool output
-	result, err := utils.Execute(default_timeout, "ceph", "osd", "lspools", "-f", "json")
+	result, err := utils.Execute(defaultTimeout, "ceph", "osd", "lspools", "-f", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (r rbdUtil) GetPools() ([]CephPool, error) {
 
 func (r rbdUtil) GetImages(pool CephPool) ([]RbdImage, error) {
 	// step: get the pool output
-	result, err := utils.Execute(default_timeout, "rbd", "-p", pool.Name, "ls", "-l", "--format", "json")
+	result, err := utils.Execute(defaultTimeout, "rbd", "-p", pool.Name, "ls", "-l", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (r rbdUtil) GetLockOwner(image RbdImage, pool CephPool) (RbdOwner, error) {
 	var owner RbdOwner
 
 	// step: construct the command
-	output, err := utils.Execute(default_timeout, "rbd", "-p", pool.Name, "lock", "list", image.Name)
+	output, err := utils.Execute(defaultTimeout, "rbd", "-p", pool.Name, "lock", "list", image.Name)
 	if err != nil {
 		return owner, fmt.Errorf("%s, output: %s", err, output)
 	}
@@ -90,8 +91,8 @@ func (r rbdUtil) GetLockOwner(image RbdImage, pool CephPool) (RbdOwner, error) {
 		if err == io.EOF {
 			break
 		}
-		if matched := lock_regex.Match([]byte(line)); matched {
-			matches := lock_regex.FindAllStringSubmatch(line, -1)
+		if matched := lockRegex.Match([]byte(line)); matched {
+			matches := lockRegex.FindAllStringSubmatch(line, -1)
 			owner.ClientID = matches[0][1]
 			owner.LockID = matches[0][2]
 			owner.Address = matches[0][3]
@@ -104,23 +105,24 @@ func (r rbdUtil) GetLockOwner(image RbdImage, pool CephPool) (RbdOwner, error) {
 
 // UnlockImage ... removes a rbd lock from the image
 //	image:	the details of the image (name/pool) etc that you wish to remove the lock
-func (r rbdUtil) UnlockImage(image RbdImage, ceph_pool CephPool) error {
+func (r rbdUtil) UnlockImage(image RbdImage, cephPool CephPool) error {
 	var name = image.Name
-	var pool = ceph_pool.Name
+	var pool = cephPool.Name
 
-	glog.Infof("Removing the lock on image: %s, pool: %s", name, pool)
+	glog.Infof("Removing the lock on image: %s/%s", pool, name)
 	// step: we get the owner of the image
-	owner, err := r.GetLockOwner(image, ceph_pool)
+	owner, err := r.GetLockOwner(image, cephPool)
 	if err != nil {
-		glog.V(4).Infof("Failed to get the lock owner of image: %s, pool: %s, error: %s", name, pool, err)
+		glog.V(4).Infof("Failed to get the lock owner of image: %s/%s, error: %s", pool, name, err)
 		return err
 	}
 
 	// step: construct the command
-	output, err := utils.Execute(default_timeout, "rbd", "-p", pool, "lock", "remove", name, owner.LockID, owner.ClientID)
+	output, err := utils.Execute(defaultTimeout, "rbd", "-p", pool, "lock", "remove", name, owner.LockID, owner.ClientID)
 	if err != nil {
 		return fmt.Errorf("%s, output: %s", err, output)
 	}
+
 	return nil
 }
 
@@ -147,29 +149,29 @@ func (r rbdUtil) UnlockClient(address string) error {
 		for _, image := range images {
 
 			if !image.IsLocked() {
-				glog.V(5).Infof("Skipping the image: %s, pool: %s as it is not locked", image.Name, pool.Name)
+				glog.V(5).Infof("Skipping the image: %s/%s as it is not locked", pool.Name, image.Name)
 				continue
 			}
 
 			// step: get the owner
 			owner, err := r.GetLockOwner(image, pool)
 			if err != nil {
-				glog.Errorf("Failed to get the owner of the image: %s, pool: %s, error: %s", image.Name, pool.Name, err)
+				glog.Errorf("Failed to get the owner of the image: %s/%s, error: %s", pool.Name, image.Name, err)
 				continue
 			}
 			// step: is the owner us?
 			if owner.Address == address {
+				glog.V(4).Infof("Client: %s has image: %s/%s locked, attempting to remove lock", address, pool.Name, image.Name)
 				// we need to unlock the image
 				err := r.UnlockImage(image, pool)
 				if err != nil {
-					glog.Errorf("Failed to unable the image: %s, pool: %s, error: %s", image.Name, pool.Name, err)
+					glog.Errorf("Failed to unable the image: %s/%s, error: %s", pool.Name, image.Name, err)
+					continue
 				}
+				glog.Infof("Successfully removed the lock on %s/%s from client: %s", pool.Name, image.Name, address)
 			}
 		}
 	}
 
 	return nil
 }
-
-
-

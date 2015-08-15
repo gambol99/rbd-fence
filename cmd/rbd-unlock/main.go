@@ -20,7 +20,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/gambol99/rbd-manager/pkg/rbd"
+	"github.com/gambol99/rbd-fence/pkg/rbd"
+
 	"github.com/golang/glog"
 )
 
@@ -32,7 +33,6 @@ var config struct {
 func init() {
 	flag.StringVar(&config.address, "ip", "", "the ip address of the client which you wish to unlock")
 }
-
 
 func main() {
 	flag.Parse()

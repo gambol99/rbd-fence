@@ -19,14 +19,14 @@ package aws
 import (
 	"fmt"
 
-	"github.com/mitchellh/goamz/ec2"
 	"github.com/golang/glog"
 	"github.com/mitchellh/goamz/aws"
+	"github.com/mitchellh/goamz/ec2"
 )
 
 const (
-	FILTER_RUNNING 	  = "running"
-	FILTER_TERMINATED = "terminated"
+	filterRunning    = "running"
+	fileerTerminated = "terminated"
 )
 
 type ec2Helper struct {
@@ -36,27 +36,27 @@ type ec2Helper struct {
 	region string
 }
 
-// Creates a new EC2 Helper interface
-func NewEC2Interface(aws_key, aws_secret, region string) (EC2Interface, error) {
-	glog.Infof("Create a new EC2 API client for region: %s", region)
+// NewEC2Interface ... Creates a new EC2 Helper interface
+func NewEC2Interface(awsKey, awsSecret, awsRegion string) (EC2Interface, error) {
+	glog.Infof("Create a new EC2 API client for region: %s", awsRegion)
 
 	service := new(ec2Helper)
-	service.region = region
+	service.region = awsRegion
 	// step: check the region is valid
-	aws_region, valid := service.isValidRegion(region)
+	region, valid := service.isValidRegion(awsRegion)
 	if !valid {
 		return nil, fmt.Errorf("invalid aws region specified, please check")
 	}
 
 	// step: attempt to acquire credentials
-	auth, err := aws.GetAuth(aws_key, aws_secret)
+	auth, err := aws.GetAuth(awsKey, awsSecret)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find authentication details, error: %s", err)
 	}
 
 	// step: create a client and return
-	service.client = ec2.New(auth, aws_region)
-	glog.V(5).Infof("Successfully create a api client for aws in region: %s", aws_region)
+	service.client = ec2.New(auth, region)
+	glog.V(5).Infof("Successfully create a api client for aws in region: %s", awsRegion)
 
 	return service, nil
 }
@@ -129,14 +129,14 @@ func (r ec2Helper) DescribeAll() ([]ec2.Instance, error) {
 // Get running instances
 func (r ec2Helper) DescribeRunning() ([]ec2.Instance, error) {
 	filter := ec2.NewFilter()
-	filter.Add("instance-state-name", FILTER_RUNNING)
+	filter.Add("instance-state-name", filterRunning)
 	return r.DescribeInstances(filter)
 }
 
 // Get terminated instances
 func (r ec2Helper) DescribeTerminated() ([]ec2.Instance, error) {
 	filter := ec2.NewFilter()
-	filter.Add("instance-state-name", FILTER_TERMINATED)
+	filter.Add("instance-state-name", fileerTerminated)
 	return r.DescribeInstances(filter)
 }
 

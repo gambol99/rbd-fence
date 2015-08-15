@@ -5,7 +5,7 @@
 #  vim:ts=2:sw=2:et
 #
 FROM scratch:latest
-ADD bin/rbd-lock-release /bin/rdb-manager
+ADD bin/rbd-manager /bin/rdb-manager
 RUN chmod +x /bin/rdb-manager
 
 ENRTYPOINT [ "/bin/rdb-manager" ]

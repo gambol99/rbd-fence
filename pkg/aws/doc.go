@@ -24,7 +24,7 @@ import (
 
 // event types
 const (
-	STATUS_RUNNING    = 1 << iota
+	STATUS_RUNNING = 1 << iota
 	STATUS_STOPPING
 	STATUS_STOPPED
 	STATUS_SHUTTING_DOWN
@@ -33,6 +33,7 @@ const (
 	STATUS_UNKNOWN
 )
 
+// InstanceEvent ... the stucture for a instance event
 type InstanceEvent struct {
 	// the instance id
 	InstanceID string
@@ -46,10 +47,10 @@ func (r InstanceEvent) String() string {
 	return fmt.Sprintf("instanceId: %s, type: %d", r.InstanceID, r.EventType)
 }
 
-// a channel to receive events upon
+// EventCh ... a channel to receive events upon
 type EventCh chan *InstanceEvent
 
-// a helper interface to ec2 instances
+// EC2Interface ... a helper interface to ec2 instances
 type EC2Interface interface {
 	// Get a complete list of instances
 	DescribeInstances(*ec2.Filter) ([]ec2.Instance, error)
@@ -65,10 +66,10 @@ type EC2Interface interface {
 	Exists(string) (bool, error)
 }
 
-// the interface for a instance listener
+// EC2EventsInterface ... the interface for a instance listener
 type EC2EventsInterface interface {
 	// Add a event listener for terminated instances
 	AddEventListener(int) EventCh
 	// Get running hosts
-	GetRunningHosts() (map[string]string)
+	GetRunningHosts() map[string]string
 }

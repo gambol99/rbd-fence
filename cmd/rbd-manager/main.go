@@ -23,8 +23,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gambol99/rbd-manager/pkg/aws"
-	"github.com/gambol99/rbd-manager/pkg/rbd"
+	"github.com/gambol99/rbd-fence/pkg/aws"
+	"github.com/gambol99/rbd-fence/pkg/rbd"
 
 	"github.com/golang/glog"
 	"github.com/mitchellh/goamz/ec2"
@@ -32,9 +32,9 @@ import (
 
 var (
 	// the rbd interface
-	rbd_client rbd.RBDInterface
+	rbdClient rbd.RBDInterface
 	// the aws events interface
-	events_client aws.EC2EventsInterface
+	eventsClient aws.EC2EventsInterface
 	// the hosts map
 	hosts map[string]string
 )
@@ -43,32 +43,32 @@ func main() {
 	var err error
 	flag.Parse()
 
-	glog.Infof("Starting the %s Service, version: %s", PROG, VERSION)
+	glog.Infof("Starting the %s Service, version: %s, git+sha: %s", Prog, Version, GitSha)
 
 	// step: create the channel to termination requests
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	// step: create a interface for events
-	events_client, err = aws.NewEC2EventsInterface(config.aws_api_key, config.aws_api_secret, config.aws_region)
+	eventsClient, err = aws.NewEC2EventsInterface(config.aws_api_key, config.aws_api_secret, config.aws_region)
 	if err != nil {
 		glog.Errorf("Failed to start service, error: %s", err)
 		os.Exit(1)
 	}
 
 	// step: create the rbd interface
-	rbd_client, err = rbd.NewRBDInterface()
+	rbdClient, err = rbd.NewRBDInterface()
 	if err != nil {
 		glog.Errorf("Failed to create interface to rbd command set, error: %s", err)
 		os.Exit(1)
 	}
 
 	// step: create the event channels
-	terminatedCh := events_client.AddEventListener(aws.STATUS_TERMINATED)
-	stoppedCh := events_client.AddEventListener(aws.STATUS_STOPPED)
-	runningCh := events_client.AddEventListener(aws.STATUS_RUNNING)
+	terminatedCh := eventsClient.AddEventListener(aws.STATUS_TERMINATED)
+	stoppedCh := eventsClient.AddEventListener(aws.STATUS_STOPPED)
+	runningCh := eventsClient.AddEventListener(aws.STATUS_RUNNING)
 	// step: get a list of running hosts and their ip addresses
-	hosts = events_client.GetRunningHosts()
+	hosts = eventsClient.GetRunningHosts()
 
 	// step: enter the event loop: we are either listening to a termination signal, a terminated box
 	// or a box being added
@@ -110,7 +110,7 @@ func removeRBDLocks(instance *ec2.Instance) {
 	var deleted = false
 
 	for i := 0; i < 3; i++ {
-		err := rbd_client.UnlockClient(address)
+		err := rbdClient.UnlockClient(address)
 		if err != nil {
 			glog.Errorf("Failed to unlock the images, attempting again if possible")
 			<-time.After(time.Duration(5) * time.Second)

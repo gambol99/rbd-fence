@@ -17,8 +17,11 @@ limitations under the License.
 package main
 
 const (
-	VERSION = "0.0.1"
-	PROG    = "RBD Manager"
+	// Version ...the version of the service
+	Version = "0.0.2"
+	// Prog ... the name of the service
+	Prog = "RBD Manager"
 )
 
-const GIT_SHA = ""
+// GIT_SHA ... The git sha we were build from
+const GitSha = "c06cf27"

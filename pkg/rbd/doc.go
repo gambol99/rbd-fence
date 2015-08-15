@@ -18,6 +18,7 @@ package rbd
 
 import "fmt"
 
+// CephPool ... the structure of a ceph pool
 type CephPool struct {
 	// the id of the pool
 	PoolNum int `json:"poolnum"`
@@ -25,6 +26,7 @@ type CephPool struct {
 	Name string `json:"poolname"`
 }
 
+// RbdImage ... the structure for a rbd image in ceph
 type RbdImage struct {
 	// the name of the image
 	Name string `json:"image"`
@@ -36,6 +38,7 @@ type RbdImage struct {
 	LockType string `json:"lock_type"`
 }
 
+// IsLocked ... checks to see if the image is locked
 func (r RbdImage) IsLocked() bool {
 	if r.LockType == "exclusive" {
 		return true
@@ -43,6 +46,7 @@ func (r RbdImage) IsLocked() bool {
 	return false
 }
 
+// RbdOwner ... the structure of a lock owner
 type RbdOwner struct {
 	// the lockId on the device
 	LockID string
@@ -59,7 +63,7 @@ func (r RbdOwner) String() string {
 		r.LockID, r.ClientID, r.Address, r.Session)
 }
 
-// the interface to RBD commands
+// RBDInterface ... the interface to RBD commands
 type RBDInterface interface {
 	// Get a list of the pool
 	GetPools() ([]CephPool, error)

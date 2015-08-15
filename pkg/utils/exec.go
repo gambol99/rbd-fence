@@ -25,7 +25,7 @@ import (
 	"github.com/golang/glog"
 )
 
-// ExecCommand ... executes a command and returns the output
+// Execute ... executes a command and returns the output
 // 	command:	the command you wish to execute
 //	args:		an array of argument to pass to the command
 // 	timeout:	a time.Duration to wait before killing off the command
