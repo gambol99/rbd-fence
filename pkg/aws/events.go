@@ -57,7 +57,7 @@ type ec2Instances struct {
 }
 
 // NewEC2EventsInterface ... Creates a new EC2InstanceInterface to consume events from
-func NewEC2EventsInterface(awsKey, awsSecret, awsRegion, awsVPC string) (EC2EventsInterface, error) {
+func NewEC2EventsInterface(awsKey, awsSecret, awsRegion, awsEnv string) (EC2EventsInterface, error) {
 	var err error
 	glog.Infof("Creating a new EC2 Instances Interface for events")
 
@@ -65,7 +65,7 @@ func NewEC2EventsInterface(awsKey, awsSecret, awsRegion, awsVPC string) (EC2Even
 	service := new(ec2Instances)
 	service.listeners = make(map[EventCh]int, 0)
 	service.hosts = make(map[string]string, 0)
-	service.client, err = NewEC2Interface(awsKey, awsSecret, awsRegion, awsVPC)
+	service.client, err = NewEC2Interface(awsKey, awsSecret, awsRegion, awsEnv)
 	if err != nil {
 		return nil, err
 	}

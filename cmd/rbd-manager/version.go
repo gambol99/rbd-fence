@@ -24,4 +24,4 @@ const (
 )
 
 // GIT_SHA ... The git sha we were build from
-const GitSha = "8eb7c4c"
+const GitSha = "35466c5"
