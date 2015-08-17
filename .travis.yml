@@ -11,4 +11,3 @@ go:
 install:
   - go get
   - go build
-  - go test -v

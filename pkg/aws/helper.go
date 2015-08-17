@@ -34,14 +34,17 @@ type ec2Helper struct {
 	client *ec2.EC2
 	// the region
 	region string
+	// the vpcid
+	vpcID string
 }
 
 // NewEC2Interface ... Creates a new EC2 Helper interface
-func NewEC2Interface(awsKey, awsSecret, awsRegion string) (EC2Interface, error) {
+func NewEC2Interface(awsKey, awsSecret, awsRegion, vpcID string) (EC2Interface, error) {
 	glog.Infof("Create a new EC2 API client for region: %s", awsRegion)
 
 	service := new(ec2Helper)
 	service.region = awsRegion
+	service.vpcID = vpcID
 	// step: check the region is valid
 	region, valid := service.isValidRegion(awsRegion)
 	if !valid {
@@ -81,7 +84,10 @@ func (r ec2Helper) DescribeInstances(filter *ec2.Filter) ([]ec2.Instance, error)
 	// step: extract and add hosts. Almost certainly a better way of doing this
 	for _, instances := range result.Reservations {
 		for _, x := range instances.Instances {
-			hosts = append(hosts, x)
+			// step: we filter out instance not in our vpc
+			if x.VpcId == r.vpcID {
+				hosts = append(hosts, x)
+			}
 		}
 	}
 

@@ -32,6 +32,8 @@ var config struct {
 	aws_region string
 	// the rbd poll
 	rbd_pool string
+	// the vpc id
+	vpcID string
 }
 
 const (
@@ -44,4 +46,5 @@ func init() {
 	flag.StringVar(&config.aws_api_secret, "secret", "", "the aws api secret, (note: taken from env or iam is left empty)")
 	flag.StringVar(&config.aws_region, "region", DEFAULT_REGION, "the aws region we are speaking to")
 	flag.StringVar(&config.rbd_pool, "pool", "rbd", "the pool the images live, leave black to check all pools")
+	flag.StringVar(&config.vpcID, "vpcid", "", "the vpc id which the instances are running in")
 }

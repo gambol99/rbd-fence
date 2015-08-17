@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"flag"
 	"os"
 	"os/signal"
@@ -49,8 +50,14 @@ func main() {
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
+	if config.vpcID == "" {
+		fmt.Printf("[error] you need to specify the vpc id for the instances are interested in")
+		os.Exit(1)
+	}
+
 	// step: create a interface for events
-	eventsClient, err = aws.NewEC2EventsInterface(config.aws_api_key, config.aws_api_secret, config.aws_region)
+	eventsClient, err = aws.NewEC2EventsInterface(config.aws_api_key, config.aws_api_secret,
+		config.aws_region, config.vpcID)
 	if err != nil {
 		glog.Errorf("Failed to start service, error: %s", err)
 		os.Exit(1)
