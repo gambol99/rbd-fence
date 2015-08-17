@@ -18,10 +18,10 @@ package main
 
 const (
 	// Version ...the version of the service
-	Version = "0.0.2"
+	Version = "0.0.3"
 	// Prog ... the name of the service
 	Prog = "RBD Manager"
 )
 
 // GIT_SHA ... The git sha we were build from
-const GitSha = "c06cf27"
+const GitSha = "22fc3c6"

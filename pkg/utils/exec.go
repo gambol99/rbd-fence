@@ -36,7 +36,7 @@ func Execute(timeout time.Duration, command string, args ...string) ([]byte, err
 		timeout = time.Duration(10) * time.Second
 	}
 
-	glog.V(5).Infof("Attempting to execute the command: %s, args: [%s], timeout: %s", command,
+	glog.V(4).Infof("Attempting to execute the command: %s, args: [%s], timeout: %s", command,
 		strings.Join(args, ","), timeout.String())
 
 	cmd := exec.Command(command, args...)

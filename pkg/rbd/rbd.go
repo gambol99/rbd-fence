@@ -34,7 +34,7 @@ type rbdUtil struct{}
 
 var (
 	lockRegex      = regexp.MustCompile("^(client\\.[0-9]+)\\s+([[:alnum:]\\._-]*)\\s+([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}):[0-9]+/([0-9]+)\\s+$")
-	defaultTimeout = time.Duration(10) * time.Second
+	defaultTimeout = time.Duration(15) * time.Second
 )
 
 // NewRBDInterface ... create a new service interface for rbd operations
